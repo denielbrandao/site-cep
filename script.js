@@ -5,19 +5,17 @@ async function validarJogo(nome) {
 }
 
 function criarLinha(dados) {
-  const tabela = document.getElementById("tabela");
+  const tabela = document.getElementById("gameTableBody");
   const tr = document.createElement("tr");
 
-  // Campos esperados do JSON da IA
   const campos = [
     "Jogo",
-    "Número de Players",
     "Valido",
     "Early Access",
+    "Número de Players",
     "Crossplay",
     "Línguas Estranhas",
-    "GeForce Now",
-    "Observações"
+    "GeForce Now"
   ];
 
   campos.forEach(campo => {
@@ -42,8 +40,19 @@ async function addGame() {
   const gameName = input.value.trim();
   if (!gameName) return;
 
-  const dados = await validarJogo(gameName);
-  criarLinha(dados);
+  try {
+    const dados = await validarJogo(gameName);
+
+    if (dados.erro) {
+      alert("Erro ao buscar o jogo: " + dados.erro);
+      return;
+    }
+
+    criarLinha(dados);
+  } catch (e) {
+    alert("Erro inesperado ao buscar o jogo.");
+    console.error(e);
+  }
 
   input.value = "";
 }

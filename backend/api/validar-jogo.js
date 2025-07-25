@@ -1,31 +1,7 @@
-const express = require('express');
-const { fetchGameInfo } = require('./openai');
-const cors = require('cors');
-require('dotenv').config();
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-app.post('/api/game-info', async (req, res) => {
-  const { gameName } = req.body;
-  if (!gameName) return res.status(400).json({ error: 'Nome do jogo é obrigatório' });
-
-  const info = await fetchGameInfo(gameName);
-  if (info) {
-    res.json(info);
-  } else {
-    res.status(500).json({ error: 'Falha ao buscar informações' });
-  }
-});
-
-const PORT = 3001;
-app.listen(PORT, () => console.log(`Backend rodando na porta ${PORT}`));
-
 const { OpenAI } = require("openai");
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 module.exports = async (req, res) => {
@@ -67,13 +43,15 @@ Jogo: ${jogo}
     const resposta = await openai.chat.completions.create({
       model: "gpt-4",
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.4
+      temperature: 0.4,
     });
 
     const texto = resposta.choices[0].message.content.trim();
     const json = JSON.parse(texto);
     return res.status(200).json(json);
   } catch (e) {
-    return res.status(500).json({ erro: "Erro na IA", detalhe: e.message });
+    return res
+      .status(500)
+      .json({ erro: "Erro na IA", detalhe: e.message || e.toString() });
   }
 };
