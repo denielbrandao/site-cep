@@ -5,17 +5,18 @@ async function validarJogo(nome) {
 }
 
 function criarLinha(dados) {
-  const tabela = document.getElementById("gameTableBody");
+  const tabela = document.getElementById("tabela");
   const tr = document.createElement("tr");
 
   const campos = [
     "Jogo",
+    "Número de Players",
     "Valido",
     "Early Access",
-    "Número de Players",
     "Crossplay",
     "Línguas Estranhas",
-    "GeForce Now"
+    "GeForce Now",
+    "Observações"
   ];
 
   campos.forEach(campo => {
@@ -28,6 +29,7 @@ function criarLinha(dados) {
   const tdRemover = document.createElement("td");
   const btn = document.createElement("button");
   btn.textContent = "Remover";
+  btn.className = "remover";
   btn.onclick = () => tr.remove();
   tdRemover.appendChild(btn);
   tr.appendChild(tdRemover);
