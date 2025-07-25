@@ -6,51 +6,22 @@ import fetch from "node-fetch";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function buscarSteamAppId(nome) {
-  const res = await fetch(`https://store.steampowered.com/api/storesearch/?term=${encodeURIComponent(nome)}&cc=br&l=portuguese`);
-  const dados = await res.json();
-  return dados.items?.[0]?.id || null;
-}
-
-async function buscarSteamInfo(appId) {
-  const res = await fetch(`https://store.steampowered.com/api/appdetails?appids=${appId}&cc=br&l=portuguese`);
-  const dados = await res.json();
-  return dados[appId]?.data || null;
-}
-
-async function buscarWikipediaLink(nome) {
-  const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(nome)}&format=json`);
-  const data = await res.json();
-  const page = data?.query?.search?.[0];
-  if (!page) return null;
-  return `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title.replace(/ /g, "_"))}`;
-}
-
 export default async function handler(req, res) {
   const { jogo } = req.query;
-  if (!jogo) return res.status(400).json({ erro: "Nome do jogo não informado" });
 
-  const appId = await buscarSteamAppId(jogo);
-  const steamData = appId ? await buscarSteamInfo(appId) : null;
-  const wikiLink = await buscarWikipediaLink(jogo);
+  if (!jogo) {
+    return res.status(400).json({ erro: "Nome do jogo não informado" });
+  }
 
-  const contextoSteam = steamData
-    ? `Nome: ${steamData.name}
-       Lançamento: ${steamData.release_date?.date} (coming_soon: ${steamData.release_date?.coming_soon})
-       Gêneros: ${steamData.genres?.map(g => g.description).join(", ")}
-       Idiomas: ${steamData.supported_languages}
-       Plataformas: ${Object.entries(steamData.platforms).filter(p => p[1]).map(p => p[0]).join(", ")}
-       Multiplayer: ${steamData.categories?.map(c => c.description).join(", ")}`.slice(0, 3000)
-    : "Nenhum dado da Steam encontrado.";
+  const serpResponse = await fetch(\`https://serpapi.com/search.json?q=\${encodeURIComponent(jogo)}&engine=google&api_key=\${process.env.SERPAPI_KEY}\`);
+  const serpJson = await serpResponse.json();
 
-  const imagem = steamData?.header_image || "";
-  const fontes = [];
-  if (steamData?.name) fontes.push({ site: "Steam", url: `https://store.steampowered.com/app/${appId}/` });
-  if (wikiLink) fontes.push({ site: "Wikipedia", url: wikiLink });
+  const contexto = serpJson.organic_results?.map(r => r.snippet).join("\n").slice(0, 1000) || "";
+  const imagem = serpJson.images_results?.[0]?.thumbnail || serpJson.organic_results?.[0]?.thumbnail || "";
 
-  const prompt = `
-Você é uma IA que avalia jogos para o grupo "Cornos & Perigosos".
-Com base nas fontes abaixo, gere um JSON com os seguintes campos:
+  const prompt = \`
+Você é uma IA treinada para avaliar jogos segundo os critérios do grupo "Cornos & Perigosos".
+Analise o jogo "\${jogo}" com base nas informações abaixo e retorne o resultado estritamente no seguinte formato JSON:
 
 {
   "nome": "",
@@ -63,23 +34,23 @@ Com base nas fontes abaixo, gere um JSON com os seguintes campos:
   "imagem": ""
 }
 
-Use APENAS os dados contidos no contexto abaixo, sem inventar nada. Cite fatos usando expressões como "Segundo a Steam", "De acordo com a Wikipedia", etc.
+⚠️ IMPORTANTE:
+- Early Access deve ser 🟢 apenas se o jogo AINDA estiver em acesso antecipado. Se já foi lançado oficialmente, marque 🔴.
+- Use SOMENTE as informações do contexto real abaixo (copiado da internet). Não invente.
+- Se algo não estiver no contexto, retorne como "🟡 Informação não confirmada".
 
 Regras:
 - Players: "🟢 Aprovado para 4+", "🟡 Possível sem o Augusto", "🔴 Apenas 1-2 jogadores"
-- Válido: 🟢, 🟡 ou 🔴 (com base na soma dos critérios)
-- Early Access: 
-   🟢 Lançado = full release,
-   🟡 Não lançado = ainda em acesso antecipado ou anunciado
-- Crossplay: 🟢, 🔴 ou 🟡 (limitado)
-- PT-BR: 🟢 se disponível em português, 🟡 se não
+- Válido: 🟢, 🟡 ou 🔴 (veredicto final baseado na soma dos critérios)
+- Early Access: 🟢 (ainda em acesso antecipado), 🔴 (já lançado)
+- Crossplay: 🟢, 🔴 ou 🟡 (PS5 apenas)
+- PT-BR: 🟢 Tem PT-BR, 🟡 Sem PT-BR
 - GeForce NOW: 🟢, 🔴 ou 🟡
-- Imagem: campo deixado em branco (será preenchido pelo sistema)
+- Imagem: deixe o campo imagem em branco (será preenchido automaticamente no backend)
 
-Fontes:
-${contextoSteam}
-${wikiLink || ""}
-`;
+Contexto real retirado da web:
+\${contexto}
+\`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
@@ -89,23 +60,20 @@ ${wikiLink || ""}
   const resposta = completion.choices[0]?.message?.content;
 
   try {
-    const match = resposta.match(/\{[\s\S]*\}/);
-    const parsed = JSON.parse(match[0]);
-
+    const json = JSON.parse(resposta);
     res.status(200).json({
-      ...parsed,
+      ...json,
       imagem,
-      fontes,
       debug: {
-        respostaBruta: resposta,
-        contextoSteam
+        contexto,
+        respostaBruta: resposta
       }
     });
   } catch (err) {
     res.status(500).json({
       erro: "Erro ao processar JSON da IA",
       respostaBruta: resposta,
-      contextoSteam
+      contexto
     });
   }
 }

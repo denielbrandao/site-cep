@@ -2,12 +2,21 @@ async function adicionarJogo() {
   const nome = document.getElementById("inputJogo").value;
   if (!nome) return alert("Digite o nome de um jogo!");
 
-  document.getElementById("loading").style.display = "block";
+  const loadingDiv = document.getElementById("loading");
+  loadingDiv.style.display = "block";
 
-  const res = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
-  const data = await res.json();
+  let data = null;
 
-  document.getElementById("loading").style.display = "none";
+  try {
+    const res = await fetch(`/api/validar-gemini.js?jogo=${encodeURIComponent(nome)}`);
+    data = await res.json();
+    if (data.erro) throw new Error("Falha no Gemini");
+  } catch {
+    const resGPT = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
+    data = await resGPT.json();
+  }
+
+  loadingDiv.style.display = "none";
 
   if (!data || !data.nome) return alert("Erro ao obter dados do jogo.");
 
@@ -28,6 +37,4 @@ async function adicionarJogo() {
 
   tabela.appendChild(linha);
   document.getElementById("inputJogo").value = "";
-
-  console.log("DEBUG:", data.debug);
 }
