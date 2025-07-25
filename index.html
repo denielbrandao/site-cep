@@ -5,6 +5,49 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cornos & Perigosos – Jogos</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 2rem;
+      background-color: #111;
+      color: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+    }
+
+    th, td {
+      padding: 0.5rem;
+      border: 1px solid #444;
+      text-align: center;
+    }
+
+    input {
+      padding: 0.5rem;
+      width: 300px;
+      font-size: 1rem;
+    }
+
+    button {
+      padding: 0.5rem 1rem;
+      margin-left: 0.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    #controls {
+      margin-bottom: 1rem;
+    }
+
+    .remover {
+      background: #b00;
+      color: #fff;
+      border: none;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -21,17 +64,17 @@
       <thead>
         <tr>
           <th>Jogo</th>
+          <th>👥 Nº Players</th>
           <th>✅ Válido</th>
           <th>🧪 Early Access</th>
-          <th>👥 Nº Players</th>
           <th>🔄 Crossplay</th>
           <th>🌐 PT-BR</th>
           <th>☁️ GeForce NOW</th>
+          <th>📌 Observações</th>
+          <th>❌</th>
         </tr>
       </thead>
-      <tbody id="gameTableBody">
-        <!-- Jogos serão adicionados aqui -->
-      </tbody>
+      <tbody id="tabela"></tbody>
     </table>
   </section>
 
