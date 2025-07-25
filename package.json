@@ -1,7 +1,13 @@
 {
+  "name": "gamecheck-cornos-perigosos",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node api/validar-jogo.js"
+  },
   "dependencies": {
-    "dotenv": "^17.2.1",
-    "google-search-results-nodejs": "^2.1.0",
-    "openai": "^5.10.2"
+    "dotenv": "^16.0.3",
+    "node-fetch": "^3.3.2",
+    "openai": "^4.0.0"
   }
 }

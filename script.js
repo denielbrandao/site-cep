@@ -1,60 +1,27 @@
-document.addEventListener("DOMContentLoaded", () => {
-  async function validarJogo(nome) {
-    const res = await fetch(`/api/validar-jogo?jogo=${encodeURIComponent(nome)}`);
-    const dados = await res.json();
-    return dados;
-  }
+async function adicionarJogo() {
+  const nome = document.getElementById("inputJogo").value;
+  if (!nome) return alert("Digite o nome de um jogo!");
 
-  function criarLinha(dados) {
-    const tabela = document.getElementById("tabela");
-    if (!tabela) {
-      alert("Tabela não encontrada no DOM!");
-      return;
-    }
+  const res = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
+  const data = await res.json();
 
-    const tr = document.createElement("tr");
+  if (!data || !data.nome) return alert("Erro ao obter dados do jogo.");
 
-    const campos = [
-      "Jogo",
-      "Número de Players",
-      "Valido",
-      "Early Access",
-      "Crossplay",
-      "Línguas Estranhas",
-      "GeForce Now",
-      "Observações"
-    ];
+  const tabela = document.querySelector("#tabela tbody");
+  const linha = document.createElement("tr");
 
-    campos.forEach(campo => {
-      const td = document.createElement("td");
-      td.textContent = dados[campo] || "-";
-      tr.appendChild(td);
-    });
+  linha.innerHTML = `
+    <td>${data.nome}</td>
+    <td>${data.players}</td>
+    <td>${data.valido}</td>
+    <td>${data.earlyAccess}</td>
+    <td>${data.crossplay}</td>
+    <td>${data.ptbr}</td>
+    <td>${data.geforcenow}</td>
+    <td>${data.observacoes}</td>
+    <td><button onclick="this.parentElement.parentElement.remove()">❌</button></td>
+  `;
 
-    const tdRemover = document.createElement("td");
-    const btn = document.createElement("button");
-    btn.textContent = "Remover";
-    btn.className = "remover";
-    btn.onclick = () => tr.remove();
-    tdRemover.appendChild(btn);
-    tr.appendChild(tdRemover);
-
-    tabela.appendChild(tr);
-  }
-
-  window.addGame = async function () {
-    const input = document.getElementById("gameInput");
-    const gameName = input.value.trim();
-    if (!gameName) return;
-
-    try {
-      const dados = await validarJogo(gameName);
-      criarLinha(dados);
-    } catch (e) {
-      alert("Erro inesperado ao buscar o jogo.");
-      console.error(e);
-    }
-
-    input.value = "";
-  };
-});
+  tabela.appendChild(linha);
+  document.getElementById("inputJogo").value = "";
+}
