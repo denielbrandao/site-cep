@@ -1,10 +1,10 @@
-const { OpenAI } = require("openai");
+import { OpenAI } from "openai";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const { jogo } = req.query;
 
   if (!jogo) {
@@ -50,8 +50,9 @@ Jogo: ${jogo}
     const json = JSON.parse(texto);
     return res.status(200).json(json);
   } catch (e) {
-    return res
-      .status(500)
-      .json({ erro: "Erro na IA", detalhe: e.message || e.toString() });
+    return res.status(500).json({
+      erro: "Erro na IA",
+      detalhe: e.message || JSON.stringify(e),
+    });
   }
-};
+}
