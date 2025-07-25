@@ -6,22 +6,50 @@ import fetch from "node-fetch";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
+async function buscarSteamAppId(nome) {
+  const res = await fetch(\`https://steamspy.com/api.php?request=all\`);
+  const jogos = await res.json();
+  nome = nome.toLowerCase();
+  for (const appId in jogos) {
+    const jogo = jogos[appId];
+    if (jogo.name.toLowerCase().includes(nome)) {
+      return appId;
+    }
+  }
+  return null;
+}
+
+async function buscarSteamInfo(appId) {
+  const res = await fetch(\`https://store.steampowered.com/api/appdetails?appids=\${appId}&cc=br&l=portuguese\`);
+  const dados = await res.json();
+  return dados[appId]?.data || null;
+}
+
 export default async function handler(req, res) {
   const { jogo } = req.query;
 
-  if (!jogo) {
-    return res.status(400).json({ erro: "Nome do jogo não informado" });
+  if (!jogo) return res.status(400).json({ erro: "Nome do jogo não informado" });
+
+  const appId = await buscarSteamAppId(jogo);
+  let steamData = null;
+  if (appId) {
+    steamData = await buscarSteamInfo(appId);
   }
 
-  const serpResponse = await fetch(`https://serpapi.com/search.json?q=${encodeURIComponent(jogo)}&engine=google&api_key=${process.env.SERPAPI_KEY}`);
-  const serpJson = await serpResponse.json();
+  const contextoSteam = steamData
+    ? \`Nome: \${steamData.name}\n
+       Lançamento: \${steamData.release_date?.date} (coming_soon: \${steamData.release_date?.coming_soon})\n
+       Gêneros: \${steamData.genres?.map(g => g.description).join(", ")}\n
+       Idiomas: \${steamData.supported_languages}\n
+       Plataformas: \${Object.entries(steamData.platforms).filter(p => p[1]).map(p => p[0]).join(", ")}\n
+       Multiplayer: \${steamData.categories?.map(c => c.description).join(", ")}\n\`
+    : "Nenhum dado da Steam encontrado.";
 
-  const contexto = serpJson.organic_results?.map(r => r.snippet).join("\n").slice(0, 1000) || "";
-  const imagem = serpJson.images_results?.[0]?.thumbnail || serpJson.organic_results?.[0]?.thumbnail || "";
+  const imagem = steamData?.header_image || "";
 
-  const prompt = `
-Você é uma IA treinada para avaliar jogos segundo os critérios do grupo "Cornos & Perigosos".
-Analise o jogo "${jogo}" com base nas informações abaixo e retorne o resultado estritamente no seguinte formato JSON:
+  const prompt = \`
+Você é uma IA que avalia jogos segundo critérios do grupo "Cornos & Perigosos".
+Com base nas informações abaixo, gere um JSON com os seguintes campos:
 
 {
   "nome": "",
@@ -34,26 +62,20 @@ Analise o jogo "${jogo}" com base nas informações abaixo e retorne o resultado
   "imagem": ""
 }
 
-⚠️ IMPORTANTE:
-- Campo "earlyAccess":
-  - Se o jogo já foi lançado em sua versão completa (Full Release), retorne: 🟢 Lançado
-  - Se o jogo está em acesso antecipado (Early Access), ainda não foi lançado ou está apenas anunciado, retorne: 🟡 Não lançado
-
-- Use SOMENTE as informações do contexto real abaixo (copiado da internet). Não invente.
-- Se algo não estiver no contexto, retorne como "🟡 Informação não confirmada".
-
 Regras:
 - Players: "🟢 Aprovado para 4+", "🟡 Possível sem o Augusto", "🔴 Apenas 1-2 jogadores"
-- Válido: 🟢, 🟡 ou 🔴 (veredicto final baseado na soma dos critérios)
-- Early Access: 🟢 Lançado, 🟡 Não lançado
-- Crossplay: 🟢, 🔴 ou 🟡 (PS5 apenas)
-- PT-BR: 🟢 Tem PT-BR, 🟡 Sem PT-BR
-- GeForce NOW: 🟢, 🔴 ou 🟡
-- Imagem: deixe o campo imagem em branco (será preenchido automaticamente no backend)
+- Válido: 🟢 (se todos os critérios forem bons), 🟡 (se apenas jogável sem Augusto), 🔴 (inadequado)
+- Early Access: 
+   - 🟢 Lançado (se o jogo já está lançado oficialmente e fora do Early Access)
+   - 🟡 Não lançado (se está em Early Access ou ainda não foi lançado)
+- Crossplay: 🟢 (tem), 🔴 (não tem), 🟡 (limitado ou só PS5)
+- PT-BR: 🟢 (tem idioma PT-BR na loja), 🟡 (não tem)
+- GeForce NOW: 🟢 (tem suporte), 🔴 (não tem), 🟡 (incerto)
+- Imagem: fornecida separadamente
 
-Contexto real retirado da web:
-${contexto}
-`;
+Informações reais do jogo extraídas da Steam:
+\${contextoSteam}
+\`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
@@ -68,7 +90,7 @@ ${contexto}
       ...json,
       imagem,
       debug: {
-        contexto,
+        steam: steamData,
         respostaBruta: resposta
       }
     });
@@ -76,7 +98,7 @@ ${contexto}
     res.status(500).json({
       erro: "Erro ao processar JSON da IA",
       respostaBruta: resposta,
-      contexto
+      contextoSteam
     });
   }
 }
