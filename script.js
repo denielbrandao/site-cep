@@ -8,12 +8,26 @@ async function adicionarJogo() {
   let data = null;
 
   try {
-    const res = await fetch(`/api/validar-gemini.js?jogo=${encodeURIComponent(nome)}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(`/api/validar-gemini.js?jogo=${encodeURIComponent(nome)}`, {
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) throw new Error("Erro no Gemini");
     data = await res.json();
-    if (data.erro) throw new Error("Falha no Gemini");
-  } catch {
-    const resGPT = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
-    data = await resGPT.json();
+  } catch (e) {
+    try {
+      const resGPT = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
+      if (!resGPT.ok) throw new Error("Erro no GPT");
+      data = await resGPT.json();
+    } catch (err) {
+      loadingDiv.style.display = "none";
+      alert("Erro ao buscar informações. Tente novamente mais tarde.");
+      return;
+    }
   }
 
   loadingDiv.style.display = "none";
