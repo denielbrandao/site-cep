@@ -18,16 +18,21 @@ async function buscarSteamInfo(appId) {
   return dados[appId]?.data || null;
 }
 
+async function buscarWikipediaLink(nome) {
+  const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(nome)}&format=json`);
+  const data = await res.json();
+  const page = data?.query?.search?.[0];
+  if (!page) return null;
+  return `https://en.wikipedia.org/wiki/${encodeURIComponent(page.title.replace(/ /g, "_"))}`;
+}
+
 export default async function handler(req, res) {
   const { jogo } = req.query;
-
   if (!jogo) return res.status(400).json({ erro: "Nome do jogo não informado" });
 
   const appId = await buscarSteamAppId(jogo);
-  let steamData = null;
-  if (appId) {
-    steamData = await buscarSteamInfo(appId);
-  }
+  const steamData = appId ? await buscarSteamInfo(appId) : null;
+  const wikiLink = await buscarWikipediaLink(jogo);
 
   const contextoSteam = steamData
     ? `Nome: ${steamData.name}
@@ -39,10 +44,13 @@ export default async function handler(req, res) {
     : "Nenhum dado da Steam encontrado.";
 
   const imagem = steamData?.header_image || "";
+  const fontes = [];
+  if (steamData?.name) fontes.push({ site: "Steam", url: `https://store.steampowered.com/app/${appId}/` });
+  if (wikiLink) fontes.push({ site: "Wikipedia", url: wikiLink });
 
   const prompt = `
-Você é uma IA que avalia jogos segundo critérios do grupo "Cornos & Perigosos".
-Com base nas informações abaixo, gere um JSON com os seguintes campos:
+Você é uma IA que avalia jogos para o grupo "Cornos & Perigosos".
+Com base nas fontes abaixo, gere um JSON com os seguintes campos:
 
 {
   "nome": "",
@@ -55,19 +63,22 @@ Com base nas informações abaixo, gere um JSON com os seguintes campos:
   "imagem": ""
 }
 
+Use APENAS os dados contidos no contexto abaixo, sem inventar nada. Cite fatos usando expressões como "Segundo a Steam", "De acordo com a Wikipedia", etc.
+
 Regras:
 - Players: "🟢 Aprovado para 4+", "🟡 Possível sem o Augusto", "🔴 Apenas 1-2 jogadores"
-- Válido: 🟢 (se todos os critérios forem bons), 🟡 (se apenas jogável sem Augusto), 🔴 (inadequado)
+- Válido: 🟢, 🟡 ou 🔴 (com base na soma dos critérios)
 - Early Access: 
-   - 🟢 Lançado (se o jogo já está lançado oficialmente e fora do Early Access)
-   - 🟡 Não lançado (se está em Early Access ou ainda não foi lançado)
-- Crossplay: 🟢 (tem), 🔴 (não tem), 🟡 (limitado ou só PS5)
-- PT-BR: 🟢 Tem PT-BR, 🟡 Sem PT-BR
+   🟢 Lançado = full release,
+   🟡 Não lançado = ainda em acesso antecipado ou anunciado
+- Crossplay: 🟢, 🔴 ou 🟡 (limitado)
+- PT-BR: 🟢 se disponível em português, 🟡 se não
 - GeForce NOW: 🟢, 🔴 ou 🟡
-- Imagem: campo deixado em branco (será preenchido no backend)
+- Imagem: campo deixado em branco (será preenchido pelo sistema)
 
-Informações reais extraídas da Steam:
+Fontes:
 ${contextoSteam}
+${wikiLink || ""}
 `;
 
   const completion = await openai.chat.completions.create({
@@ -84,6 +95,7 @@ ${contextoSteam}
     res.status(200).json({
       ...parsed,
       imagem,
+      fontes,
       debug: {
         respostaBruta: resposta,
         contextoSteam
