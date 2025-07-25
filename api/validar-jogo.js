@@ -13,13 +13,15 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: "Nome do jogo não informado" });
   }
 
-  const serpData = await fetch(\`https://serpapi.com/search.json?q=\${encodeURIComponent(jogo)}&engine=google&api_key=\${process.env.SERPAPI_KEY}\`);
-  const serpJson = await serpData.json();
-  const contexto = serpJson.organic_results?.map(r => r.snippet).join("\n").slice(0, 1000) || "";
+  const serpResponse = await fetch(`https://serpapi.com/search.json?q=${encodeURIComponent(jogo)}&engine=google&api_key=${process.env.SERPAPI_KEY}`);
+  const serpJson = await serpResponse.json();
 
-  const prompt = \`
+  const contexto = serpJson.organic_results?.map(r => r.snippet).join("\n").slice(0, 1000) || "";
+  const imagem = serpJson.images_results?.[0]?.thumbnail || serpJson.organic_results?.[0]?.thumbnail || "";
+
+  const prompt = `
 Você é uma IA treinada para avaliar jogos segundo os critérios do grupo "Cornos & Perigosos".
-Analise o jogo "\${jogo}" com base nas informações abaixo e retorne o resultado estritamente no seguinte formato JSON:
+Analise o jogo "${jogo}" com base nas informações abaixo e retorne o resultado estritamente no seguinte formato JSON:
 
 {
   "nome": "",
@@ -29,26 +31,29 @@ Analise o jogo "\${jogo}" com base nas informações abaixo e retorne o resultad
   "crossplay": "",
   "ptbr": "",
   "geforcenow": "",
-  "observacoes": ""
+  "imagem": ""
 }
 
 ⚠️ IMPORTANTE:
-- Todas as respostas devem se basear SOMENTE nas informações do contexto abaixo (copiadas da internet).
-- NÃO INVENTE. Se algo não estiver no contexto, diga “não encontrado” na observação.
-- Use expressões como: “segundo a Steam...”, “a página oficial diz...”, “no site do PS Store consta...”.
+- Campo "earlyAccess":
+  - Se o jogo já foi lançado em sua versão completa (Full Release), retorne: 🟢 Lançado
+  - Se o jogo está em acesso antecipado (Early Access), ainda não foi lançado ou está apenas anunciado, retorne: 🟡 Não lançado
+
+- Use SOMENTE as informações do contexto real abaixo (copiado da internet). Não invente.
+- Se algo não estiver no contexto, retorne como "🟡 Informação não confirmada".
 
 Regras:
 - Players: "🟢 Aprovado para 4+", "🟡 Possível sem o Augusto", "🔴 Apenas 1-2 jogadores"
-- Válido: 🟢, 🟡 ou 🔴 (veredicto final)
-- Early Access: 🟢 ou 🔴
+- Válido: 🟢, 🟡 ou 🔴 (veredicto final baseado na soma dos critérios)
+- Early Access: 🟢 Lançado, 🟡 Não lançado
 - Crossplay: 🟢, 🔴 ou 🟡 (PS5 apenas)
-- PT-BR: 🟢 Tem PT-BR ou 🟡 Sem PT-BR
+- PT-BR: 🟢 Tem PT-BR, 🟡 Sem PT-BR
 - GeForce NOW: 🟢, 🔴 ou 🟡
-- Observações: cite fontes se possível.
+- Imagem: deixe o campo imagem em branco (será preenchido automaticamente no backend)
 
 Contexto real retirado da web:
-\${contexto}
-\`;
+${contexto}
+`;
 
   const completion = await openai.chat.completions.create({
     model: "gpt-4",
@@ -61,6 +66,7 @@ Contexto real retirado da web:
     const json = JSON.parse(resposta);
     res.status(200).json({
       ...json,
+      imagem,
       debug: {
         contexto,
         respostaBruta: resposta
