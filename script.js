@@ -1,54 +1,33 @@
-async function adicionarJogo() {
-  const nome = document.getElementById("inputJogo").value;
-  if (!nome) return alert("Digite o nome de um jogo!");
+document.querySelector("button").addEventListener("click", async () => {
+  const nome = document.querySelector("input").value;
+  if (!nome) return;
 
-  const loadingDiv = document.getElementById("loading");
-  loadingDiv.style.display = "block";
-
-  let data = null;
+  document.getElementById("loading").style.display = "block";
 
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(`/api/validar-jogo?jogo=${encodeURIComponent(nome)}`);
+    const dados = await res.json();
 
-    const res = await fetch(`/api/validar-gemini.js?jogo=${encodeURIComponent(nome)}`, {
-      signal: controller.signal
-    });
-    clearTimeout(timeout);
+    document.getElementById("loading").style.display = "none";
 
-    if (!res.ok) throw new Error("Erro no Gemini");
-    data = await res.json();
-  } catch (e) {
-    try {
-      const resGPT = await fetch(`/api/validar-jogo.js?jogo=${encodeURIComponent(nome)}`);
-      if (!resGPT.ok) throw new Error("Erro no GPT");
-      data = await resGPT.json();
-    } catch (err) {
-      loadingDiv.style.display = "none";
-      alert("Erro ao buscar informações. Tente novamente mais tarde.");
+    if (dados.erro) {
+      alert(dados.motivo || "Erro ao obter dados do jogo");
       return;
     }
+
+    const tabela = document.getElementById("tabela");
+    const linha = tabela.insertRow();
+
+    linha.insertCell().innerHTML = `<img src="\${dados.imagem}" width="64">`;
+    linha.insertCell().innerText = dados.nome;
+    linha.insertCell().innerText = dados.players;
+    linha.insertCell().innerText = dados.valido;
+    linha.insertCell().innerText = dados.earlyAccess;
+    linha.insertCell().innerText = dados.crossplay;
+    linha.insertCell().innerText = dados.ptbr;
+    linha.insertCell().innerText = dados.geforcenow;
+  } catch (e) {
+    document.getElementById("loading").style.display = "none";
+    alert("Erro ao obter dados do jogo");
   }
-
-  loadingDiv.style.display = "none";
-
-  if (!data || !data.nome) return alert("Erro ao obter dados do jogo.");
-
-  const tabela = document.querySelector("#tabela tbody");
-  const linha = document.createElement("tr");
-
-  linha.innerHTML = `
-    <td><img src="${data.imagem}" alt="img" class="game-thumb" /></td>
-    <td>${data.nome}</td>
-    <td>${data.players}</td>
-    <td>${data.valido}</td>
-    <td>${data.earlyAccess}</td>
-    <td>${data.crossplay}</td>
-    <td>${data.ptbr}</td>
-    <td>${data.geforcenow}</td>
-    <td><button onclick="this.parentElement.parentElement.remove()">❌</button></td>
-  `;
-
-  tabela.appendChild(linha);
-  document.getElementById("inputJogo").value = "";
-}
+});

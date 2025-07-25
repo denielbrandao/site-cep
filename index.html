@@ -1,38 +1,54 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>🎮 Lista de Jogos – Cornos & Perigosos</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="favicon.ico" />
-</head>
-<body>
-  <h1>🎮 Lista de Jogos – Cornos & Perigosos</h1>
-  <div class="input-group">
-    <input type="text" id="inputJogo" placeholder="Digite o nome do jogo..." />
-    <button onclick="adicionarJogo()">Adicionar</button>
-  </div>
-  <div id="loading">
-    <div class="spinner"></div>
-    <p>Buscando informações...</p>
-  </div>
-  <table id="tabela">
-    <thead>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Lista de Jogos – Cornos & Perigosos</title>
+    <style>
+      body {
+        background-color: #111;
+        color: white;
+        font-family: sans-serif;
+        padding: 20px;
+      }
+      h1 {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      table {
+        margin-top: 20px;
+        width: 100%;
+        border-collapse: collapse;
+      }
+      td, th {
+        border: 1px solid #333;
+        padding: 8px;
+        text-align: left;
+      }
+      #loading {
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🎮 Lista de Jogos – Cornos & Perigosos</h1>
+    <div class="input-group">
+      <input type="text" placeholder="Nome do jogo..." />
+      <button>Adicionar</button>
+    </div>
+    <div id="loading" style="display: none;">Buscando informações...</div>
+    <table id="tabela">
       <tr>
         <th>Imagem</th>
         <th>Jogo</th>
-        <th>👥 Nº Players</th>
+        <th>🎮 Nº Players</th>
         <th>✅ Válido</th>
-        <th>🧪 Early Access</th>
-        <th>🔄 Crossplay</th>
+        <th>🟢 Early Access</th>
+        <th>🕹️ Crossplay</th>
         <th>🌐 PT-BR</th>
-        <th>☁️ GeForce NOW</th>
-        <th>❌</th>
+        <th>☁ GeForce NOW</th>
       </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
-  <script src="script.js"></script>
-</body>
+    </table>
+    <script src="script.js"></script>
+  </body>
 </html>
