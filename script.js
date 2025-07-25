@@ -24,4 +24,6 @@ async function adicionarJogo() {
 
   tabela.appendChild(linha);
   document.getElementById("inputJogo").value = "";
+
+  console.log("DEBUG:", data.debug);  // Ver dados brutos retornados
 }

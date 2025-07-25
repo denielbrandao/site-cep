@@ -4,41 +4,34 @@ body {
   font-family: sans-serif;
   padding: 20px;
 }
-
 h1 {
   text-align: center;
 }
-
 .input-group {
   display: flex;
   justify-content: center;
   margin-bottom: 20px;
 }
-
 input[type="text"] {
   padding: 10px;
   font-size: 16px;
   width: 300px;
 }
-
 button {
   padding: 10px;
   margin-left: 10px;
   cursor: pointer;
 }
-
 table {
   width: 100%;
   border-collapse: collapse;
   margin-top: 10px;
 }
-
 th, td {
   border: 1px solid #333;
   padding: 10px;
   text-align: center;
 }
-
 tr:nth-child(even) {
   background-color: #222;
 }
