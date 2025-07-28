@@ -1,33 +1,26 @@
 document.querySelector("button").addEventListener("click", async () => {
-  const nome = document.querySelector("input").value;
-  if (!nome) return;
+  const nome = document.querySelector("input").value.trim();
+  if (!nome) return alert("Digite o nome do jogo");
 
-  document.getElementById("loading").style.display = "block";
+  document.querySelector("#loading").style.display = "block";
 
-  try {
-    const res = await fetch(`/api/validar-jogo?jogo=${encodeURIComponent(nome)}`);
-    const dados = await res.json();
+  const res = await fetch("/api/validar-jogo.js?jogo=" + encodeURIComponent(nome));
+  const data = await res.json();
 
-    document.getElementById("loading").style.display = "none";
+  document.querySelector("#loading").style.display = "none";
 
-    if (dados.erro) {
-      alert(dados.motivo || "Erro ao obter dados do jogo");
-      return;
-    }
+  if (data.erro) return alert("Erro ao obter dados do jogo.");
 
-    const tabela = document.getElementById("tabela");
-    const linha = tabela.insertRow();
-
-    linha.insertCell().innerHTML = `<img src="\${dados.imagem}" width="64">`;
-    linha.insertCell().innerText = dados.nome;
-    linha.insertCell().innerText = dados.players;
-    linha.insertCell().innerText = dados.valido;
-    linha.insertCell().innerText = dados.earlyAccess;
-    linha.insertCell().innerText = dados.crossplay;
-    linha.insertCell().innerText = dados.ptbr;
-    linha.insertCell().innerText = dados.geforcenow;
-  } catch (e) {
-    document.getElementById("loading").style.display = "none";
-    alert("Erro ao obter dados do jogo");
-  }
+  const row = document.createElement("tr");
+  row.innerHTML = \`
+    <td><img src="/icon.png" width="32" height="32"></td>
+    <td>\${data.jogo}</td>
+    <td>\${data.players}</td>
+    <td>\${data.valido}</td>
+    <td>\${data.early}</td>
+    <td>\${data.cross}</td>
+    <td>\${data.ptbr}</td>
+    <td>\${data.geforce}</td>
+  \`;
+  document.querySelector("table").appendChild(row);
 });
