@@ -1,16 +1,35 @@
 
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Cornos & Perigosos</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cornos & Perigosos</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <img src="images/logo.jpg" alt="Logo Coronos & Perigosos" class="logo"/>
-    <h1>Cornos & Perigosos</h1>
-  </div>
+    <div class="container">
+        <img src="logo.jpg" alt="Logo Cornos & Perigosos" class="logo">
+        <h1>Cornos & Perigosos</h1>
+        <input type="text" id="searchInput" placeholder="Buscar jogo...">
+        <table id="gamesTable">
+            <thead>
+                <tr>
+                    <th>Jogo</th>
+                    <th>✅ Válido</th>
+                    <th>👥 Nº Players</th>
+                    <th>🧪 Early Access</th>
+                    <th>🔄 Crossplay (PC x PS5)</th>
+                    <th>🌐 PT-BR</th>
+                    <th>☁️ GeForce NOW</th>
+                    <th>📌 Observações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Jogos serão inseridos aqui via JavaScript -->
+            </tbody>
+        </table>
+    </div>
+    <script src="script.js"></script>
 </body>
 </html>
