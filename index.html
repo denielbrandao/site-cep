@@ -2,34 +2,46 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cornos & Perigosos</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cornos & Perigosos</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <div class="container">
-        <img src="logo.jpg" alt="Logo Cornos & Perigosos" class="logo">
-        <h1>Cornos & Perigosos</h1>
-        <input type="text" id="searchInput" placeholder="Buscar jogo...">
-        <table id="gamesTable">
-            <thead>
-                <tr>
-                    <th>Jogo</th>
-                    <th>✅ Válido</th>
-                    <th>👥 Nº Players</th>
-                    <th>🧪 Early Access</th>
-                    <th>🔄 Crossplay (PC x PS5)</th>
-                    <th>🌐 PT-BR</th>
-                    <th>☁️ GeForce NOW</th>
-                    <th>📌 Observações</th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Jogos serão inseridos aqui via JavaScript -->
-            </tbody>
-        </table>
+  <div class="container">
+    <img src="assets/logo.png" alt="Logo Cornos & Perigosos" class="logo" />
+    <h1>Cornos & Perigosos</h1>
+    <div class="search-container">
+      <input type="text" id="searchInput" placeholder="Digite o nome do jogo..." />
+      <button onclick="search()">Buscar</button>
     </div>
-    <script src="script.js"></script>
+    <table id="gamesTable">
+      <thead>
+        <tr>
+          <th>Jogo</th>
+          <th>✅ Válido</th>
+          <th>👥 Nº Players</th>
+          <th>🧪 Early Access</th>
+          <th>🔄 Crossplay (PC x PS5)</th>
+          <th>🌐 PT-BR</th>
+          <th>☁️ GeForce NOW</th>
+          <th>📌 Observações</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Helldivers 2</td>
+          <td>🟢</td>
+          <td>🟢 4+ jogadores</td>
+          <td>🟢 Não está em Early Access</td>
+          <td>🟢 Crossplay total</td>
+          <td>🟢 Totalmente em PT-BR</td>
+          <td>🟢 Disponível no GeForce NOW</td>
+          <td>🟢 Nenhuma observação crítica</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>

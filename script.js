@@ -1,9 +1,14 @@
 
-document.getElementById("searchInput").addEventListener("input", function () {
-    const filter = this.value.toLowerCase();
-    const rows = document.querySelectorAll("#gamesTable tbody tr");
-    rows.forEach(row => {
-        const text = row.textContent.toLowerCase();
-        row.style.display = text.includes(filter) ? "" : "none";
-    });
-});
+function search() {
+  const input = document.getElementById("searchInput").value.toLowerCase();
+  const rows = document.querySelectorAll("#gamesTable tbody tr");
+
+  rows.forEach(row => {
+    const game = row.cells[0].textContent.toLowerCase();
+    if (game.includes(input)) {
+      row.style.display = "";
+    } else {
+      row.style.display = "none";
+    }
+  });
+}
